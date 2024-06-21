@@ -1,0 +1,86 @@
+﻿@model PassionProjectN01664066.ViewModels.DashboardViewModel
+
+@{
+    ViewBag.Title = "Dashboard";
+}
+
+<h2>Dashboard</h2>
+
+<div class="row">
+    <div class="col-md-4">
+        <h3>My Movies</h3>
+        <h4>Watched Movies</h4>
+        <ul>
+            @foreach (var review in Model.WatchedMovies)
+            {
+                <li>
+                    @review.Movie.Title
+                    <button class="btn btn-sm btn-primary edit-movie" data-id="@review.ReviewId">Edit</button>
+                    <button class="btn btn-sm btn-danger delete-movie" data-id="@review.ReviewId">Delete</button>
+                </li>
+            }
+        </ul>
+
+        <h4>Watchlist</h4>
+        <ul>
+            @foreach (var item in Model.Watchlist)
+            {
+                <li>
+                    @item.Movie.Title
+                    <button class="btn btn-sm btn-success mark-watched" data-id="@item.WatchlistId">Mark as Watched</button>
+                </li>
+            }
+        </ul>
+    </div>
+    <div class="col-md-8">
+        <h3>Search Movies</h3>
+        <form id="movie-search-form">
+            <div class="input-group mb-3">
+                <input type="text" class="form-control" id="movie-search" placeholder="Search for a movie...">
+                <div class="input-group-append">
+                    <button class="btn btn-primary" type="submit">Search</button>
+                </div>
+            </div>
+        </form>
+        <div id="search-results"></div>
+        <div class="mt-3">
+            <a href="@Url.Action("AddMovie", "Movie")" class="btn btn-primary">Add Movie</a>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        $('#movie-search-form').submit(function (e) {
+            e.preventDefault();
+            var searchTerm = $('#movie-search').val();
+            $.get('/Home/SearchMovies', { searchTerm: searchTerm }, function (data) {
+                console.log("Search results:", data);  // Log the entire response
+                var results = '';
+                if (data.Search && data.Search.length > 0) {
+                    console.log("Movies found:", data.Search.length);
+                    data.Search.forEach(function (movie) {
+                        console.log("Processing movie:", movie);
+                        results += '<div class="movie-result">';
+                        results += '<h4>' + movie.Title + ' (' + movie.Year + ')</h4>';
+                        results += '<button class="btn btn-sm btn-primary add-to-watchlist" data-id="' + movie.imdbID + '">Add to Watchlist</button>';
+                        results += '<button class="btn btn-sm btn-success mark-as-watched" data-id="' + movie.imdbID + '">Mark as Watched</button>';
+                        results += '</div>';
+                    });
+                } else {
+                    console.log("No movies found or data.Search is undefined");
+                    if (data.Error) {
+                        results = '<p>Error: ' + data.Error + '</p>';
+                    } else {
+                        results = '<p>No results found. Please try a different search term.</p>';
+                    }
+                }
+                console.log("Final results HTML:", results);
+                $('#search-results').html(results);
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                console.error("AJAX request failed:", textStatus, errorThrown);
+                $('#search-results').html('<p>An error occurred while searching. Please try again.</p>');
+            });
+        });
+    </script>
+}
